@@ -63,6 +63,7 @@ class Record implements RecordPlatform {
 
   @override
   Future<List<InputDevice>> listInputDevices() {
+    _log('InputDevices: NONE MUAHAHAHA');
     return RecordPlatform.instance.listInputDevices();
   }
 
