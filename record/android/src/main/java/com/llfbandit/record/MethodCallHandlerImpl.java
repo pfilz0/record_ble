@@ -1,3 +1,17 @@
+/*
+  The goal of this fork is to allow recording from a bluetooth microphone on Android. Note that
+  we're force to use SCO which limits the sample-rate to an abysmal 8 kHz. Things will change
+  when BLE Audio becomes available on more devices.
+
+  changes in the forked (record_bt) version:
+    - added permissions in AndroidManifest.xml
+      - legacy (SDK<30): BLUETOOTH, BLUETOOTH_ADMIN
+      - BLUETOOTH_CONNECT, MODIFY_AUDIO_SETTINGS
+      - from SDK>30, BLUETOOTH_CONNECT has to be requested explicitly
+
+
+ */
+
 package com.llfbandit.record;
 
 import android.Manifest;
@@ -23,6 +37,7 @@ public class MethodCallHandlerImpl implements
     PluginRegistry.RequestPermissionsResultListener {
 
   private static final int RECORD_AUDIO_REQUEST_CODE = 1001;
+  private static final int BLUETOOTH_CONNECT_REQUEST_CODE = 1002;
 
   private static final int RECORD_STATE_PAUSE = 0;
   private static final int RECORD_STATE_RECORD = 1;

@@ -69,7 +69,11 @@ public class AudioRecorder implements RecorderBase {
 
     try {
 
-      recorder = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, samplingRate, channelConfig, audioFormat, bufferSize);
+      recorder = new AudioRecord(MediaRecorder.AudioSource.DEFAULT,
+              samplingRate,
+              channelConfig,
+              audioFormat,
+              bufferSize);
 
       isRecording.set(true);
 
