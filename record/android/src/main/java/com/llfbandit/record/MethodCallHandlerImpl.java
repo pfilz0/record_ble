@@ -261,4 +261,88 @@ public class MethodCallHandlerImpl implements
   private void sendStateEvent(int state) {
     if (eventSink != null) eventSink.success(state);
   }
+
+  /* map int received from EXTRA_CONNECTION_STATE to string*/
+  private Map<Integer, String> strConnectionState = new HashMap<Integer, String>() {{
+    put(0, "disconnected");
+    put(1, "connecting");
+    put(2, "connected");
+    put(3, "disconnecting");
+    put(10, "turned off");
+    put(12, "turned on");
+    put(13, "turning off");
+    put(11, "turning on");
+  }};
+
+  private BroadcastReceiver btStateReceiver = new BroadcastReceiver() {
+    /*
+        handle all events connected to Bluetooth devices.
+     */
+    @SuppressLint("MissingPermission")
+    @Override
+    public void onReceive(Context context, @NonNull Intent intent) {
+      Bundle extras = intent.getExtras();
+      switch (intent.getAction()) {
+        case BluetoothAdapter.ACTION_STATE_CHANGED:
+          if (extras == null) {
+            return;
+          }
+          // print some debug info
+          final int state = extras.getInt(BluetoothAdapter.EXTRA_STATE);
+          Log.d(LOG_TAG, "Bluetooth connection changed to state: "
+                  + strConnectionState.get(state));
+          // if BT was turned off, revoke permissions
+          if (strConnectionState.get(state) == "turned off") {
+            bluetoothConnectionPermitted = false;
+            // stop current recording
+            if (isRecording) {
+              isIncompleteRecording = true;
+              recordButton.performClick();
+            }
+          }
+          break;
+
+        case BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED:
+          if (extras == null)
+            return;
+          final BluetoothDevice device = extras.getParcelable(BluetoothDevice.EXTRA_DEVICE);
+          final int connectionState = extras.getInt(BluetoothAdapter.EXTRA_CONNECTION_STATE);
+          // print some debug info
+          System.out.printf("DEVICE: %s", device);
+          Log.d(LOG_TAG, "Bluetooth connection: " + device.getName() +
+                  " [" + device.getAddress() + "] changed to state: "
+                  + strConnectionState.get(connectionState));
+
+          // if last device is disconnected, revoke permission
+          if (Objects.equals(strConnectionState.get(connectionState),
+                  "disconnected")) {
+            // check if there's still another headset connected
+            if (!isBluetoothDeviceConnected()) {
+              bluetoothConnectionPermitted = false;
+              // stop current recording
+              if (isRecording) {
+                isIncompleteRecording = true;
+                recordButton.performClick();
+              }
+            }
+            // if a new headset is connected, grant permission
+            // NOTE: using bluetoothConnectionPermitted here is a bit odd,
+            //       but it should be fine since we would never get here
+            //       if we didn't have the BLUETOOTH_CONNECT permission
+          } else if (Objects.equals(strConnectionState.get(connectionState),
+                  "connected")) {
+            if (isBluetoothDeviceConnected()) {
+              bluetoothConnectionPermitted = true;
+            }
+          }
+
+          break;
+
+        default:
+          String actUnhandled = String.format("Received unhandled action: %",
+                  intent.getAction());
+          Log.w(LOG_TAG, actUnhandled);
+      }
+    }
+  };
 }
